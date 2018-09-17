@@ -122,13 +122,18 @@ class TimeProcessing(object):
         init_timestamp = 0
         return init_timestamp
 
-    def get_week_features(self):
+    def get_week_features(self, item):
         # train为7天数据,test为1天数据
-        pass
+        init_timestamp = self._get_init_timestamp()
+        interval_seconds = item - init_timestamp
+        interval_days = int(interval_seconds / (3600 * 24))
+        week_num = interval_days % 6
+        return week_num
 
-    def get_hour_features(self):
+    def get_hour_features(self, item):
         # 通过时间戳换算小时数
-        pass
+        init_timestamp = self._get_init_timestamp()
+        
 
 
 class Processing(object):
