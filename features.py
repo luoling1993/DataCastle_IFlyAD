@@ -29,9 +29,9 @@ class TagsProcessing(object):
             tags_list = tags.split(",")
             return sorted(tags_list)
         except AttributeError:
-            return tags
+            return str(tags)
 
-    def _get_topn_tags(self, topn=10):
+    def get_topn_tags(self, topn=10):
         # 获取频率最高的user_tags
         tags_list = list()
         for _, tags in self.user_tags.iteritems():
@@ -39,13 +39,13 @@ class TagsProcessing(object):
                 _tags_list = tags.split(",")
                 tags_list.extend(_tags_list)
             except AttributeError:
-                tags_list.append(tags)
+                tags_list.append(str(tags))
         tags_counter = Counter(tags_list)
         topn_counter = tags_counter.most_common(topn)
         topn_tags = [item[0] for item in topn_counter]
         return topn_tags
 
-    def _get_topn_tags_group(self, topn=10):
+    def get_topn_tags_group(self, topn=10):
         # 获取频率最高的user_tags组合
         tags_group_list = list()
         for _, tags in self.user_tags.iteritems():
@@ -53,8 +53,59 @@ class TagsProcessing(object):
             tags_group_list.append(sorted_tags)
         tags_group_counter = Counter(tags_group_list)
         topn_counter = tags_group_counter.most_common(topn)
-        topn_group_tags = [item[0] for item in topn_counter]
-        return topn_group_tags
+        topn_tags_group = [item[0] for item in topn_counter]
+        return topn_tags_group
+
+    def get_topn_tags_df(self, topn_tags):
+        # 获取topn_tags构造的DataFrame
+        columns = list()
+        tags_df_list = list()
+
+        for topn_tag in topn_tags:
+            coumn = "user_tags_{topn_tag}".format(topn_tag=topn_tag)
+            columns.append(coumn)
+
+        for user_tag in self.user_tags:
+            try:
+                user_tag_list = user_tag.split(",")
+            except AttributeError:
+                user_tag_list = [str(user_tag)]
+
+            tags_list = list()
+            for topn_tag in topn_tags:
+                if topn_tag in user_tag_list:
+                    tags_list.append(1)
+                else:
+                    tags_list.append(0)
+
+            tags_df_list.append(tags_list)
+
+        tags_df = pd.DataFrame(data=tags_df_list, columns=columns)
+        return tags_df
+
+    def get_topn_tags_group_df(self, topn_tags_group):
+        # 获取topn_tags_group构造的DataFrame
+        columns = list()
+        tags_group_df_list = list()
+
+        for idx, _ in enumerate(topn_tags_group):
+            coumn = "topn_tags_group_{idx}".format(idx=idx)
+            columns.append(coumn)
+
+        for user_tag in self.user_tags:
+            sorted_user_tags = self._sorted_tags(user_tag)
+
+            tags_group_list = list()
+            for tags_group in topn_tags_group:
+                if tags_group == sorted_user_tags:
+                    tags_group_list.append(1)
+                else:
+                    tags_group_list.append(0)
+
+            tags_group_df_list.append(tags_group_list)
+
+        tags_group_df = pd.DataFrame(data=tags_group_df_list, columns=columns)
+        return tags_group_df
 
 
 class TimeProcessing(object):
@@ -145,4 +196,9 @@ class Processing(object):
 
 
 if __name__ == "__main__":
-    Processing().get_processing()
+    pass
+    # test_df = Processing()._get_data(name="test")
+    # tag_processing = TagsProcessing(test_df["user_tags"])
+    # topn_tags = tag_processing.get_topn_tags(topn=10)
+    # df = tag_processing.get_topn_tags_df(topn_tags)
+    # print(df.head(10))
