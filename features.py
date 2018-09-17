@@ -110,7 +110,25 @@ class TagsProcessing(object):
 
 class TimeProcessing(object):
     # time字段特殊处理
-    pass
+    def __init__(self, times):
+        if not isinstance(times, pd.Series):
+            raise ValueError("times must be pd.Series!")
+        self.times = times
+
+    @staticmethod
+    def _get_init_timestamp():
+        # 手动设定初始化时间戳
+        # 表示x日0点0分0秒
+        init_timestamp = 0
+        return init_timestamp
+
+    def get_week_features(self):
+        # train为7天数据,test为1天数据
+        pass
+
+    def get_hour_features(self):
+        # 通过时间戳换算小时数
+        pass
 
 
 class Processing(object):
