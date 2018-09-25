@@ -2,16 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import os
+import warnings
 from collections import Counter
 
 import numpy as np
 import pandas as pd
 
+from utils import get_col_corr
+
+warnings.filterwarnings('ignore')
+
 REMOVE_COLUMN = ["make", "model", "os", "osv", "app_paid"]
 DUMPS_COLUMN = ["province", "carrier", "devtype", "nnt", "os_name", "advert_id", "campaign_id", "creative_tp_dnf",
-                "app_cate_id", "f_channel", "app_id", "creative_type", "creative_is_jump", "creative_is_download",
+                "app_cate_id", "f_channel", "creative_type", "creative_is_jump", "creative_is_download",
                 "creative_is_js", "creative_is_voicead", "creative_has_deeplink", "advert_name"]
-RATE_COLUMN = ["city", "adid", "orderid", "creative_id", "inner_slot_id", ]
+RATE_COLUMN = ["city", "adid", "orderid", "creative_id", "inner_slot_id", "app_id"]
 DONNET_COLUMN = ["instance_id", "time", "user_tags", "creative_width", "creative_height", "advert_industry_inner",
                  "click"]
 
@@ -27,7 +32,7 @@ class TagsProcessing(object):
             return str(tags)
 
     @staticmethod
-    def get_topn_tags(user_tags, topn=100):
+    def get_topn_tags(user_tags, topn=20):
         # 获取频率最高的user_tags
         if not isinstance(user_tags, pd.Series):
             raise ValueError("user_tags must be pd.Series!")
@@ -44,7 +49,7 @@ class TagsProcessing(object):
         topn_tags = [item[0] for item in topn_counter]
         return topn_tags
 
-    def get_topn_tags_group(self, user_tags, topn=100):
+    def get_topn_tags_group(self, user_tags, topn=20):
         # 获取频率最高的user_tags组合
         if not isinstance(user_tags, pd.Series):
             raise ValueError("user_tags must be pd.Series!")
@@ -215,6 +220,9 @@ class Processing(object):
         train_df_length = train_df.shape[0]
         df = pd.concat([train_df, test_df], axis=0, ignore_index=True, sort=False)
 
+        df["app_id"] = df["app_id"].fillna(-1).astype(np.int_)
+        df["app_cate_id"] = df["app_cate_id"].fillna(-1).astype(np.int_)
+
         df["creative_area"] = df["creative_width"] * df["creative_height"]
         df["advert_industry_1"], df["advert_industry_2"] = df["advert_industry_inner"].str.split("_").str
         df = df.drop(columns=["advert_industry_inner"])
@@ -256,6 +264,16 @@ class Processing(object):
 
         train_df["click"] = train_df["click"].apply(int)
         test_df = test_df.drop(columns=["click"])
+
+        # 去除共线性
+        remove_fields = ["instance_id", "click"]
+        columns = train_df.columns
+        features_fields = [column for column in columns if column not in remove_fields]
+        corr_df = get_col_corr(train_df[features_fields])
+        corr_col = corr_df[corr_df["corr"] > 0.99].col_2.values.tolist()
+
+        train_df = train_df.drop(columns=corr_col)
+        test_df = test_df.drop(columns=corr_col)
 
         train_df.to_csv(train_name, index=False)
         test_df.to_csv(test_name, index=False)
