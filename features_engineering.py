@@ -100,9 +100,10 @@ class TagsProcessing(object):
         svd_df = self._get_svd_df(tags, n_components)
 
         # FIXME: 内存不够，无法运行
-        # rate_svd_df = self._get_rate_svd_df(tags, cilck, n_components)
-        # tags_df = pd.concat([svd_df, rate_svd_df], axis=1)
-        return svd_df
+        rate_svd_df = self._get_rate_svd_df(tags, cilck, n_components)
+        tags_df = pd.concat([svd_df, rate_svd_df], axis=1)
+
+        return tags_df
 
 
 class TimeProcessing(object):
@@ -365,10 +366,11 @@ def features_selector():
     features = [column for column in columns if column not in remove_fields]
 
     # VarianceThreshold
-    # selector_columns = get_variance_selector_columns(train_data[features], threshold=0.01)
-    # drop_columns = [column for column in features if column not in selector_columns]
-    # train_data = train_data.drop(columns=drop_columns)
-    # test_data = test_data.drop(columns=drop_columns)
+    # FIXME:
+    selector_columns = get_variance_selector_columns(train_data[features], threshold=0.01)
+    drop_columns = [column for column in features if column not in selector_columns]
+    train_data = train_data.drop(columns=drop_columns)
+    test_data = test_data.drop(columns=drop_columns)
 
     # Model Select
     columns = train_data.columns

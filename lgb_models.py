@@ -82,6 +82,6 @@ if __name__ == "__main__":
         "silent": False
     }
 
-    train_df = get_data(name="train", stacking=True)
-    test_df = get_data(name="test", stacking=True)
+    train_df = get_data(name="train", stacking=False)
+    test_df = get_data(name="test", stacking=False)
     lgb_model(train_df, test_df, lgb_parms)
